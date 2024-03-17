@@ -1,30 +1,7 @@
 import React from 'react';
 import "./SettingComponent.css";
 
-interface SettingsComponentProps {
-    onURDFLoad: (isURDFLoaded: boolean) => void;
-    onSLAMLoad: (isSLAMLoaded: boolean) => void;
-};
-
-const SettingsComponent: React.FC<SettingsComponentProps> = ({ onURDFLoad, onSLAMLoad }) => {
-
-    const handleSelectURDF = async (e: React.ChangeEvent<HTMLInputElement>): Promise<void> => {
-        e.preventDefault();
-        const selectedURDF = e.target.files && e.target.files[0];
-
-        if (selectedURDF) {
-            const blob: Blob = new Blob([selectedURDF], { type: "application/xml" });
-            const urdfString: string = URL.createObjectURL(blob);
-            localStorage.setItem("urdf", urdfString);
-            onURDFLoad(true);
-        }
-    };
-
-    const handleSelectSLAM = async (e: React.ChangeEvent<HTMLInputElement>): Promise<void> => {
-        const isChecked: boolean = e.target.checked;
-        console.log(`handleSelectSLAM isChecked : ${isChecked}`);
-        onSLAMLoad(isChecked);
-    };
+function SettingsComponent() {
 
     return (
         <div className="setting_container">
@@ -33,17 +10,42 @@ const SettingsComponent: React.FC<SettingsComponentProps> = ({ onURDFLoad, onSLA
                 <input
                     type='file'
                     name='urdf'
-                    onChange={handleSelectURDF}
                     accept='.urdf, .URDF'
                 />
             </div>
-            <div className="slam_container">
-                <h3>SLAM</h3>
+            <div className="camera_container">
+                <h3>Camera</h3>
                 <input
-                    type='checkbox'
-                    name='slam'
-                    onChange={handleSelectSLAM}
+                    type='button'
+                    name='camera_front'
+                    value="Front"
                 />
+                <input
+                    type='button'
+                    name='camera_side'
+                    value="Top"
+                />
+                <input
+                    type='button'
+                    name='camera_top'
+                    value="Side"
+                />
+            </div>
+            <div className="link_container">
+                <h3>Link</h3>
+                <select name="link_select">
+                    <option value="link1">link1</option>
+                    <option value="link1">link1</option>
+                    <option value="link1">link1</option>
+                    <option value="link1">link1</option>
+                    <option value="link1">link1</option>
+                    <option value="link1">link1</option>
+                    <option value="link1">link1</option>
+                </select>
+                <h3>Geometry</h3>
+                <button>box</button>
+                <button>cylinder</button>
+                <button>sphere</button>
             </div>
         </div>
     );

@@ -5,6 +5,7 @@ import MainPage from './page/mainpage/Mainpage';
 
 function App() {
   return (
+    
     <div className='App'>
       <BrowserRouter>
         <Routes>

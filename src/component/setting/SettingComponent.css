@@ -6,8 +6,24 @@
     border-right: 2px solid black;
 }
 
-.setting_container > div {
+.setting_container > div:nth-child(-n+2) {
+    margin-left: 10px;
     border-bottom: 2px solid black;
-    width: 100%;
+    width: 93%;
     height: 10%;
+}
+
+.camera_container input {
+    margin-right: 15px;
+}
+
+.link_container {
+    margin-left: 10px;
+    border-bottom: 2px solid black;
+    width: 93%;
+    height: 18%;
+}
+
+.link_container button{
+    margin-right: 15px;
 }
