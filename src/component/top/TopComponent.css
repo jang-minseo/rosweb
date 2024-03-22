@@ -1,0 +1,25 @@
+.top_container {
+    width: 1920px;
+    height: 42px;
+    display: flex;
+    border-bottom: 2px solid black;
+}
+
+.logo_container {
+    margin-top: 5px;
+    margin-left: 10px;
+}
+
+.img_logo {
+    width: 30px;
+    height: 30px;
+}
+
+.title_container {
+    font-weight: bold;
+    font-size: 16px;
+    line-height: 40px;
+    letter-spacing: 0.4px;
+    padding-left: 12px;
+    padding-right: 12px;
+}
