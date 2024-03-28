@@ -3,83 +3,83 @@ import React, { useEffect, useState } from "react";
 import "./UniverseComponent.css";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import URDFLoader, { URDFRobot } from "urdf-loader";
-// import { cameraDirection } from "../page/mainpage/MainComponent"; 
 
 interface UniverseComponentProps {
     isURDFLoaded: boolean;
     cameraDirection: string;
+    selectedLink: string;
+    setLinkNames: (linkNames: string[]) => void;
+    setJointNames: (jointNames: string[]) => void;
+    urdfKey: number;
 }
 
-const UniverseComponent:  React.FC<UniverseComponentProps> = ({isURDFLoaded, cameraDirection}) => {
+const UniverseComponent: React.FC<UniverseComponentProps> = ({isURDFLoaded, cameraDirection, selectedLink, setLinkNames, setJointNames, urdfKey}) => {
     let renderer: THREE.WebGLRenderer;
     let scene: THREE.Scene;
     let camera: THREE.PerspectiveCamera;
     let control: OrbitControls;
+    const [robot, setRobotGroup] = useState<THREE.Group>();
 
-    const [robot, setRobot] = useState<THREE.Group>();
-    
-    
+    // 3D 화면 기본 설정
     const viewScene = (container: HTMLElement): void => {
-        scene = new THREE.Scene(); // 장면 생성
-        camera = new THREE.PerspectiveCamera(75, container.offsetWidth / container.offsetHeight, 0.1, 1000); // 카메라 설정
-        renderer = new THREE.WebGLRenderer({antialias:true}); // 랜더러 설정
-        renderer.setSize(container.offsetWidth, container.offsetHeight); // 화면 사이즈 설정
+        scene = new THREE.Scene();
+        camera = new THREE.PerspectiveCamera(75,container.offsetWidth / container.offsetHeight, 0.1, 1000 );
+        renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(container.offsetWidth, container.offsetHeight);
         control = new OrbitControls(camera, renderer.domElement);
         container.appendChild(renderer.domElement);
 
-        camera.position.set(0,2,2);
-        camera.lookAt(0,0,0);
+        camera.position.set(0, 8, 8);
+        camera.lookAt(0, 0, 0);
 
         control.update();
 
-        container.addEventListener('resize', () => {
-            renderer.setSize(container.offsetWidth, container.offsetHeight);
-            camera.aspect = container.offsetWidth / container.offsetHeight;
-            camera.updateProjectionMatrix();
-        });
+        scene.add(new THREE.AxesHelper(4));
+        scene.add(new THREE.GridHelper(11, 11));
 
-        setAxesHelper();
-        setGridHelper();
-    }; 
-
-    const animate = (): void => {
-        requestAnimationFrame(animate);
-        control.update();
-        renderer.render(scene, camera);
+        const animate = (): void => {
+            requestAnimationFrame(animate);
+            control.update();
+            renderer.render(scene, camera);
+        };
+        animate();
     };
 
-    const setAxesHelper = (): void => {
-        const axesHelper: THREE.AxesHelper = new THREE.AxesHelper(1);
-        axesHelper.position.set(0, 0, 0);
-        scene.add(axesHelper);
+    // 카메라 조정 기능
+    const updateCameraPosition = (): void => {
+        const cameraPositions: Record<string, [number, number, number]> = {
+            Front: [3, 0, 0],
+            Top: [0, 3, 0],
+            Side: [0, 0, 3],
+            Back: [-3, 0, 0],
+        };
+
+        const position = cameraPositions[cameraDirection];
+        if (position) {
+            camera.position.set(...position);
+        }
     };
 
-    const setGridHelper = (): void => {
-        const size: number = 3;
-        const divisions: number = 3;
-
-        const gridHelper: THREE.GridHelper = new THREE.GridHelper(size, divisions);
-        scene.add(gridHelper);
-    }; 
-
-
-
+    // URDF Load 기능
     const loadURDF = (): void => {
         if (isURDFLoaded) {
             const manager = new THREE.LoadingManager();
             const loader = new URDFLoader(manager);
 
             loader.packages = {
-                packageName: '/',
+                packageName: "/",
             };
 
-            const urdfURL: string = localStorage.getItem('urdf')!.toString();
+            const urdfURL: string = localStorage.getItem("urdf")!.toString();
             console.log(`urdfURL : ${urdfURL}`);
 
             loader.load(urdfURL, (robot: URDFRobot) => {
                 console.log(`robot : ${JSON.stringify(robot)}`);
+                const RobotGroup: THREE.Group = new THREE.Group();
+                const linkNames: string[] = [];
+                const jointNames: string[] = [];
+                const geometryTypes: any = "";
 
-                const robotGroup: THREE.Group = new THREE.Group();
                 robot.traverse((child: any) => {
                     const childJson: any = JSON.parse(JSON.stringify(child));
 
@@ -87,16 +87,14 @@ const UniverseComponent:  React.FC<UniverseComponentProps> = ({isURDFLoaded, cam
                         const colorTag: string = childJson.materials[0].name.toLocaleLowerCase();
 
                         switch (colorTag) {
-                            case 'black':
+                            case "black":
+                            case "light_black":
                                 child.material = new THREE.MeshBasicMaterial({ color: 0x00000 });
                                 break;
-                            case 'light_black':
-                                child.material = new THREE.MeshBasicMaterial({ color: 0x00000 });
-                                break;
-                            case 'blue':
+                            case "blue":
                                 child.material = new THREE.MeshBasicMaterial({ color: 0x0000ff });
                                 break;
-                            case 'red':
+                            case "red":
                                 child.material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
                                 break;
                             default:
@@ -106,70 +104,77 @@ const UniverseComponent:  React.FC<UniverseComponentProps> = ({isURDFLoaded, cam
                         child.material.transparent = true;
                         child.material.opacity = 1.0;
                     }
+                    
+                    // link와 joint Name 추출 로직
+                    if (child.type === "URDFLink") {
+                        linkNames.push(child.name);
+                    } else if (child.type === "URDFJoint") {
+                        jointNames.push(child.name);
+                    }
+
                     child.castShadow = true;
                 });
 
-                robot.scale.set(0.1, 0.1, 0.1);
+                setLinkNames(linkNames);
+                setJointNames(jointNames);
 
-                robotGroup.add(robot);
-                setRobot(robotGroup);
-                robotGroup.position.set(0, 0, 0);
-                robotGroup.rotateX(-(Math.PI / 2));
-
-                scene.add(robotGroup);
+                RobotGroup.add(robot);
+                setRobotGroup(RobotGroup);
+                RobotGroup.position.set(0, 0, 0);
+                RobotGroup.rotateX(-(Math.PI / 2));
+                scene.add(RobotGroup);
             });
         }
     };
 
-    const updateCameraDirection = (): void => {
-        switch (cameraDirection) {
-            case "Front":
-                camera.position.set(3, 0, 0);
-                break;
-            case "Top":
-                camera.position.set(0, 3, 0);
-                break;
-            case "Side":
-                camera.position.set(0, 0, 3);
-                break;
-            case "Back":
-                camera.position.set(-3, 0, 0);
-                break;
-            default:
-                break;
-        }
-    };
-
-
     useEffect(() => {
-        const container: HTMLElement | null = document.getElementById('universe_container');
-
-        if(container) {
+        const container: HTMLElement | null = document.getElementById("universe_container");
+    
+        if (container) {
             viewScene(container);
-            animate();
-            
-            
+
+            if (isURDFLoaded) {
+                loadURDF();
+            }
         }
-
-       updateCameraDirection();
-
-        if (isURDFLoaded) {
-            loadURDF();
-        }
-
 
         return (): void => {
+            if (robot && scene) {
+                scene.remove(robot); // URDF 모델을 장면에서 제거
+                robot.traverse((child) => {
+                    if ((child as THREE.Mesh).isMesh) {
+                        let mesh = child as THREE.Mesh;
+                        if (mesh.material) {
+                            (mesh.material as THREE.Material).dispose();
+                        }
+                        if (mesh.geometry) {
+                            mesh.geometry.dispose();
+                        }
+                    }
+                });
+            }
             container!.removeChild(renderer.domElement);
-            loadURDF();
-        }
-    }, [isURDFLoaded, cameraDirection]);
-
+        };
+    }, [isURDFLoaded, urdfKey]);
     
+    useEffect(() => {
+        updateCameraPosition();
+    }, [cameraDirection])
 
-    return (
-        <div id='universe_container' className='universe_container'></div>
-    )
-}
+    useEffect(() => {
+        if (robot && selectedLink) {
+            const selectedObject = robot.getObjectByName(selectedLink);
+            if (selectedObject) {
+                selectedObject.traverse((child) => {
+                    if (child instanceof THREE.Mesh) {
+                        console.log(`${selectedLink}의 Geometry: `, child.geometry.type);
+                    }
+                });
+            }
+        }
+    }, [selectedLink, robot]);
+
+    return <div id="universe_container" className="universe_container"></div>;
+};
 
 export default UniverseComponent;
-
