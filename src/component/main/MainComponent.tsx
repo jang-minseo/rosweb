@@ -11,6 +11,7 @@ const MainComponent = () => {
     const [linkNames, setLinkNames] = useState<string[]>([]);
     const [jointNames, setJointNames] = useState<string[]>([]);
     const [selectedLink, setSelectedLink] = useState<string>("");
+    const [selectedGeometry, setSelectedGeometry] = useState<string>("");
 
     const selectURDF = (isURDFLoaded: boolean): void => {
         setIsURDFLoaded(isURDFLoaded);
@@ -26,6 +27,10 @@ const MainComponent = () => {
         console.log(`${linkName}이 선택됨`);
     };
 
+    const handleGeometry = (selectedGeometry: string): void => {
+        setSelectedGeometry(selectedGeometry);
+    }
+
     return (
         <div className="mainpage_container">
             <div className="top_component_container">
@@ -39,10 +44,12 @@ const MainComponent = () => {
                         linkNames={linkNames}
                         jointNames={jointNames}
                         onSelectLink={handleLinkSelect}
+                        onSelectedGeometry={handleGeometry}
                     />
                 </div>
                 <div className="universe_component_container">
                     <UniverseComponent
+                        selectedGeometry={selectedGeometry}
                         isURDFLoaded={isURDFLoaded}
                         cameraDirection={cameraDirection}
                         selectedLink={selectedLink}

@@ -4,12 +4,13 @@ import "./SettingComponent.css";
 interface SettingComponentProps {
     onURDFLoad: (isURDFLoaded: boolean) => void;
     onChangeCameraDirection: (direction: string) => void;
+    onSelectedGeometry: (geometry: string) => void;
     onSelectLink: (linkName: string) => void;
     linkNames: string[];
     jointNames: string[];
 }
 
-const SettingsComponent: React.FC<SettingComponentProps> = ({onURDFLoad, onChangeCameraDirection, onSelectLink, linkNames, jointNames}) => {
+const SettingsComponent: React.FC<SettingComponentProps> = ({onURDFLoad, onChangeCameraDirection, onSelectedGeometry, onSelectLink, linkNames, jointNames}) => {
     const [selectedLink, setSelectedLink] = useState<string>('');
     const [selectedFileName, setSelectedFileName] = useState<string>('');
 
@@ -36,8 +37,11 @@ const SettingsComponent: React.FC<SettingComponentProps> = ({onURDFLoad, onChang
     const selectLink = (linkName: string): void => {
         setSelectedLink(linkName);
         onSelectLink(linkName);
-        // console.log(`${linkName}의 geometry :`, linkGeometries);
     };
+
+    const geometryChangeButton = (geomteryType: string): void => {
+        onSelectedGeometry(geomteryType);
+    }
 
     return (
         <div className="setting_container">
@@ -73,9 +77,9 @@ const SettingsComponent: React.FC<SettingComponentProps> = ({onURDFLoad, onChang
                     ))}
                 </select>
                 <h3>Geometry</h3>
-                <button onClick={() => ("box")}>box</button>
-                <button onClick={() => ("cylinder")}>cylinder</button>
-                <button onClick={() => ("sphere")}>sphere</button>
+                <button onClick={() => geometryChangeButton("BoxGeometry")}>box</button>
+                <button onClick={() => geometryChangeButton("CylinderGeometry")}>cylinder</button>
+                <button onClick={() => geometryChangeButton("SphereGeometry")}>sphere</button>
             </div>
             <div className="joint_container">
                 <h3>Joint <span>&#40;범위:&#41;</span></h3>

@@ -11,14 +11,16 @@ interface UniverseComponentProps {
     setLinkNames: (linkNames: string[]) => void;
     setJointNames: (jointNames: string[]) => void;
     urdfKey: number;
+    selectedGeometry: string;
 }
 
-const UniverseComponent: React.FC<UniverseComponentProps> = ({isURDFLoaded, cameraDirection, selectedLink, setLinkNames, setJointNames, urdfKey}) => {
+const UniverseComponent: React.FC<UniverseComponentProps> = ({isURDFLoaded, selectedGeometry, cameraDirection, selectedLink, setLinkNames, setJointNames, urdfKey}) => {
     let renderer: THREE.WebGLRenderer;
     let scene: THREE.Scene;
     let camera: THREE.PerspectiveCamera;
     let control: OrbitControls;
     const [robot, setRobotGroup] = useState<THREE.Group>();
+    const [robotJSON, setRobotJSON] = useState<{geometries: any, materials: any, metadata: any, object: any}>();
 
     // 3D 화면 기본 설정
     const viewScene = (container: HTMLElement): void => {
@@ -74,14 +76,15 @@ const UniverseComponent: React.FC<UniverseComponentProps> = ({isURDFLoaded, came
             console.log(`urdfURL : ${urdfURL}`);
 
             loader.load(urdfURL, (robot: URDFRobot) => {
-                console.log(`robot : ${JSON.stringify(robot)}`);
+                
+                
                 const RobotGroup: THREE.Group = new THREE.Group();
                 const linkNames: string[] = [];
                 const jointNames: string[] = [];
-                const geometryTypes: any = "";
-
                 robot.traverse((child: any) => {
                     const childJson: any = JSON.parse(JSON.stringify(child));
+                    
+                    setRobotJSON(childJson);
 
                     if (child instanceof THREE.Mesh) {
                         const colorTag: string = childJson.materials[0].name.toLocaleLowerCase();
@@ -113,8 +116,8 @@ const UniverseComponent: React.FC<UniverseComponentProps> = ({isURDFLoaded, came
                     }
 
                     child.castShadow = true;
+                                       
                 });
-
                 setLinkNames(linkNames);
                 setJointNames(jointNames);
 
@@ -136,6 +139,10 @@ const UniverseComponent: React.FC<UniverseComponentProps> = ({isURDFLoaded, came
             if (isURDFLoaded) {
                 loadURDF();
             }
+
+            if(cameraDirection) {
+                updateCameraPosition();
+            }
         }
 
         return (): void => {
@@ -155,24 +162,56 @@ const UniverseComponent: React.FC<UniverseComponentProps> = ({isURDFLoaded, came
             }
             container!.removeChild(renderer.domElement);
         };
-    }, [isURDFLoaded, urdfKey]);
+    }, [isURDFLoaded, urdfKey, cameraDirection, selectedLink, selectedGeometry]);
+
+    const updateGeometry = (): void => {
+        if (robotJSON && selectedLink && selectedGeometry) {
+            let updatedGeometry = robotJSON.geometries[0]; // 첫 번째 geometry를 가져옴
+            console.log(`${selectedLink}의 현재 geometry type은 ${updatedGeometry.type} 입니다.`);
     
-    useEffect(() => {
-        updateCameraPosition();
-    }, [cameraDirection])
+            // selectedGeometry 값에 따라 geometry type 변경
+            switch (selectedGeometry) {
+                case "BoxGeometry":
+                case "CylinderGeometry":
+                case "SphereGeometry":
+                    updatedGeometry.type = selectedGeometry;
+                    console.log(`${selectedLink}의 geometry type를 ${selectedGeometry}로 바꿉니다.`);
+                    break;
+            }
+    
+            // 변경된 geometry를 robotJSON에 다시 저장
+            robotJSON.geometries[0] = updatedGeometry;
+            setRobotJSON(robotJSON);
+            
+        }
+    };
 
     useEffect(() => {
-        if (robot && selectedLink) {
-            const selectedObject = robot.getObjectByName(selectedLink);
-            if (selectedObject) {
-                selectedObject.traverse((child) => {
-                    if (child instanceof THREE.Mesh) {
-                        console.log(`${selectedLink}의 Geometry: `, child.geometry.type);
+        
+        if(selectedGeometry) {
+            updateGeometry();
+            console.log(robotJSON);
+        }
+        
+        
+        return (): void => {
+            if (robot && scene) {
+                scene.remove(robot); // URDF 모델을 장면에서 제거
+                robot.traverse((child) => {
+                    if ((child as THREE.Mesh).isMesh) {
+                        let mesh = child as THREE.Mesh;
+                        if (mesh.material) {
+                            (mesh.material as THREE.Material).dispose();
+                        }
+                        if (mesh.geometry) {
+                            mesh.geometry.dispose();
+                        }
                     }
                 });
             }
-        }
-    }, [selectedLink, robot]);
+        };
+    },[selectedLink,selectedGeometry, urdfKey]);
+
 
     return <div id="universe_container" className="universe_container"></div>;
 };
