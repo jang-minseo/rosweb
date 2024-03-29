@@ -14,7 +14,7 @@ const SettingsComponent: React.FC<SettingComponentProps> = ({onURDFLoad, onChang
     const [selectedLink, setSelectedLink] = useState<string>('');
     const [selectedFileName, setSelectedFileName] = useState<string>('');
 
-    // URDF 파일이 선택될 때 호출되는 이벤트 - 해당 파일의 Blob URL을 생성하여 로컬 스토리지에 저장하고 파일 이름을 화면에 표출
+//    URDF 파일이 선택될 때 호출되는 이벤트 - 해당 파일의 Blob URL을 생성하여 로컬 스토리지에 저장하고 파일 이름을 화면에 표출
     const selectURDF = async (e: React.ChangeEvent<HTMLInputElement>): Promise<void> => {
         e.preventDefault();
         const choiceFile = e.target.files && e.target.files[0];
@@ -27,6 +27,27 @@ const SettingsComponent: React.FC<SettingComponentProps> = ({onURDFLoad, onChang
             onURDFLoad(true);
         }
     };
+    // const selectURDF = async (e: React.ChangeEvent<HTMLInputElement>): Promise<void> => {
+    //     e.preventDefault();
+    //     const choiceFile = e.target.files && e.target.files[0];
+    //     if (choiceFile) {
+    //         const fileName = choiceFile.name;
+    //         setSelectedFileName(fileName);
+    
+    //         // XML 파일 로드
+    //         const reader = new FileReader();
+    //         reader.onload = (event) => {
+    //             if (event.target && typeof event.target.result === 'string') {
+    //                 const urdfString: string = event.target.result;
+    //                 localStorage.setItem("urdf", urdfString);
+    //                 onURDFLoad(true);
+    //                 // 여기에서 urdfString을 이용하여 XML 데이터를 처리할 수 있습니다.
+    //                 handleXMLData(urdfString);
+    //             }
+    //         };
+    //         reader.readAsText(choiceFile);
+    //     }
+    // }
 
     // 카메라 시점 변경을 처리하는 함수
     const handleCamera = (direction: string) => {
@@ -40,6 +61,7 @@ const SettingsComponent: React.FC<SettingComponentProps> = ({onURDFLoad, onChang
     };
 
     const geometryChangeButton = (geomteryType: string): void => {
+        console.log(`Selected geometry type: ${geomteryType}`);
         onSelectedGeometry(geomteryType);
     }
 
@@ -70,28 +92,24 @@ const SettingsComponent: React.FC<SettingComponentProps> = ({onURDFLoad, onChang
             </div>
             <div className="link_container">
                 <h3>Link</h3>
-                <select name="link_name" value={selectedLink} onChange={(e) => selectLink(e.target.value)}>
-                    <option value="">Select a link</option>
-                    {linkNames.map((linkName, index) => (
-                        <option key={index} value={linkName}>{linkName}</option>
-                    ))}
-                </select>
+                <h2>선택된 link :</h2>
                 <h3>Geometry</h3>
                 <button onClick={() => geometryChangeButton("BoxGeometry")}>box</button>
                 <button onClick={() => geometryChangeButton("CylinderGeometry")}>cylinder</button>
                 <button onClick={() => geometryChangeButton("SphereGeometry")}>sphere</button>
             </div>
             <div className="joint_container">
-                <h3>Joint <span>&#40;범위:&#41;</span></h3>
+                <h3>Joint <span>&#40;범위: -3 ~ 3&#41;</span></h3>
                 {jointNames.length > 0 && jointNames.map((jointName, index) => (
-                    <div key={index} className="joint_progress_container">
+                    <div key={index} className="joint_input_container">
                         <div className='joint_name'>{jointName}</div>
                         <input
-                            type="range"
-                            id={`progress_${index}`}
-                            defaultValue={50}
-                            min={0}
-                            max={100}
+                            type="number"
+                            id={`number_${index}`}
+                            defaultValue={0}
+                            min={-3}
+                            max={3}
+                            step={0.01}
                         />
                     </div>
                 ))}

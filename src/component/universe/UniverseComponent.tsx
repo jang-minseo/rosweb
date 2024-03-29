@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import React, { useEffect, useState } from "react";
+import React, { Children, useEffect, useState } from "react";
 import "./UniverseComponent.css";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import URDFLoader, { URDFRobot } from "urdf-loader";
@@ -73,7 +73,6 @@ const UniverseComponent: React.FC<UniverseComponentProps> = ({isURDFLoaded, sele
             };
 
             const urdfURL: string = localStorage.getItem("urdf")!.toString();
-            console.log(`urdfURL : ${urdfURL}`);
 
             loader.load(urdfURL, (robot: URDFRobot) => {
                 
@@ -107,11 +106,7 @@ const UniverseComponent: React.FC<UniverseComponentProps> = ({isURDFLoaded, sele
                         child.material.transparent = true;
                         child.material.opacity = 1.0;
                     }
-                    
-                    // link와 joint Name 추출 로직
-                    if (child.type === "URDFLink") {
-                        linkNames.push(child.name);
-                    } else if (child.type === "URDFJoint") {
+                     if (child.type === "URDFJoint") {
                         jointNames.push(child.name);
                     }
 
@@ -127,23 +122,89 @@ const UniverseComponent: React.FC<UniverseComponentProps> = ({isURDFLoaded, sele
                 RobotGroup.rotateX(-(Math.PI / 2));
                 scene.add(RobotGroup);
             });
-        }
+        } 
     };
 
+    // // gemetry 변경하기
+    // const updateGeometry = (): void => {
+    //     if (robotJSON && selectedLink && selectedGeometry) {
+    //         let updatedGeometry = robotJSON.geometries[0]; // 첫 번째 geometry를 가져옴
+            
+    //         // selectedGeometry 값에 따라 geometry type 변경
+    //         switch (selectedGeometry) {
+    //             case "BoxGeometry":
+    //                 updatedGeometry.type = selectedGeometry;
+    //                 break;
+    //             case "CylinderGeometry":
+    //                 updatedGeometry.type = selectedGeometry;
+    //                 updatedGeometry.radiusBottom = 1;
+    //                 updatedGeometry.radialSegments = 30;
+    //                 updatedGeometry.radiusTop = 1;
+    //                 updatedGeometry.openEnded = false;
+    //                 break;
+    //             case "SphereGeometry":
+    //                 updatedGeometry.type = selectedGeometry;
+    //                 break;
+    //         }
+    
+    //         // 변경된 geometry를 robotJSON에 다시 저장
+    //         robotJSON.geometries[0] = updatedGeometry;
+    //         setRobotJSON(robotJSON);         
+            
+    //     }
+    // };
+
+    const onCanvasClick = (event: MouseEvent) => {
+        event.preventDefault();
+    
+        // 마우스 위치를 계산합니다.
+        const rect = renderer.domElement.getBoundingClientRect();
+        const mouseX = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+        const mouseY = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+    
+        // Raycaster 객체를 생성합니다.
+        const raycaster = new THREE.Raycaster();
+        raycaster.setFromCamera(new THREE.Vector2(mouseX, mouseY), camera);
+    
+        // GridHelper와 AxesHelper를 제외한 객체만 필터링합니다.
+        const objectsToCheck = scene.children.filter(child => 
+            !(child instanceof THREE.GridHelper || child instanceof THREE.AxesHelper));
+    
+        // 필터링된 객체 배열을 사용하여 교차 검사를 수행합니다.
+        const intersects = raycaster.intersectObjects(objectsToCheck, true);
+    
+        if (intersects.length > 0) {
+            let targetObject = intersects[0].object;
+            const selectedObject = intersects[0].object;
+            console.log(selectedObject);
+            
+            // 부모 오브젝트를 탐색하며 URDFLink 찾기
+            while (targetObject !== null && targetObject !== null) {
+                if (targetObject.parent?.parent?.type) {
+                    console.log(`URDFLink name: ${targetObject.parent?.parent?.name}`);
+                    break;
+                }
+                targetObject = targetObject.parent as THREE.Object3D;
+            }
+        }
+    };
+    
     useEffect(() => {
         const container: HTMLElement | null = document.getElementById("universe_container");
     
-        if (container) {
-            viewScene(container);
+        if (!container) return;
 
-            if (isURDFLoaded) {
-                loadURDF();
-            }
+        viewScene(container);
 
-            if(cameraDirection) {
-                updateCameraPosition();
-            }
+        if (isURDFLoaded) {
+            loadURDF();
         }
+
+        if(cameraDirection) {
+            updateCameraPosition();
+        }
+
+        container.addEventListener('click', onCanvasClick, false);
 
         return (): void => {
             if (robot && scene) {
@@ -160,58 +221,10 @@ const UniverseComponent: React.FC<UniverseComponentProps> = ({isURDFLoaded, sele
                     }
                 });
             }
+            container.removeEventListener('click', onCanvasClick, false);
             container!.removeChild(renderer.domElement);
         };
     }, [isURDFLoaded, urdfKey, cameraDirection, selectedLink, selectedGeometry]);
-
-    const updateGeometry = (): void => {
-        if (robotJSON && selectedLink && selectedGeometry) {
-            let updatedGeometry = robotJSON.geometries[0]; // 첫 번째 geometry를 가져옴
-            console.log(`${selectedLink}의 현재 geometry type은 ${updatedGeometry.type} 입니다.`);
-    
-            // selectedGeometry 값에 따라 geometry type 변경
-            switch (selectedGeometry) {
-                case "BoxGeometry":
-                case "CylinderGeometry":
-                case "SphereGeometry":
-                    updatedGeometry.type = selectedGeometry;
-                    console.log(`${selectedLink}의 geometry type를 ${selectedGeometry}로 바꿉니다.`);
-                    break;
-            }
-    
-            // 변경된 geometry를 robotJSON에 다시 저장
-            robotJSON.geometries[0] = updatedGeometry;
-            setRobotJSON(robotJSON);
-            
-        }
-    };
-
-    useEffect(() => {
-        
-        if(selectedGeometry) {
-            updateGeometry();
-            console.log(robotJSON);
-        }
-        
-        
-        return (): void => {
-            if (robot && scene) {
-                scene.remove(robot); // URDF 모델을 장면에서 제거
-                robot.traverse((child) => {
-                    if ((child as THREE.Mesh).isMesh) {
-                        let mesh = child as THREE.Mesh;
-                        if (mesh.material) {
-                            (mesh.material as THREE.Material).dispose();
-                        }
-                        if (mesh.geometry) {
-                            mesh.geometry.dispose();
-                        }
-                    }
-                });
-            }
-        };
-    },[selectedLink,selectedGeometry, urdfKey]);
-
 
     return <div id="universe_container" className="universe_container"></div>;
 };

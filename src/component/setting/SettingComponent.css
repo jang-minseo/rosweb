@@ -95,7 +95,7 @@
     font-size: 12px;
 }
 
-.joint_progress_container {
+.joint_input_container {
     display: flex;
     justify-content: space-between;
     align-items: center;
