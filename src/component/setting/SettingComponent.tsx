@@ -4,17 +4,22 @@ import "./SettingComponent.css";
 interface SettingComponentProps {
     onURDFLoad: (isURDFLoaded: boolean) => void;
     onChangeCameraDirection: (direction: string) => void;
-    onSelectedGeometry: (geometry: string) => void;
-    onSelectLink: (linkName: string) => void;
-    linkNames: string[];
+    onChangeGeometry: (geometryType: string) => void;
+    linkName : string;
     jointNames: string[];
+    selectedGeometry: string; // 새로운 props 추가: 선택한 지오메트리 상태
 }
 
-const SettingsComponent: React.FC<SettingComponentProps> = ({onURDFLoad, onChangeCameraDirection, onSelectedGeometry, onSelectLink, linkNames, jointNames}) => {
-    const [selectedLink, setSelectedLink] = useState<string>('');
+const SettingsComponent: React.FC<SettingComponentProps> = ({
+    onURDFLoad, 
+    onChangeCameraDirection, 
+    onChangeGeometry, 
+    jointNames, 
+    linkName,
+    selectedGeometry // 새로운 props로부터 선택한 지오메트리 상태 가져오기
+}) => {
     const [selectedFileName, setSelectedFileName] = useState<string>('');
 
-//    URDF 파일이 선택될 때 호출되는 이벤트 - 해당 파일의 Blob URL을 생성하여 로컬 스토리지에 저장하고 파일 이름을 화면에 표출
     const selectURDF = async (e: React.ChangeEvent<HTMLInputElement>): Promise<void> => {
         e.preventDefault();
         const choiceFile = e.target.files && e.target.files[0];
@@ -27,42 +32,13 @@ const SettingsComponent: React.FC<SettingComponentProps> = ({onURDFLoad, onChang
             onURDFLoad(true);
         }
     };
-    // const selectURDF = async (e: React.ChangeEvent<HTMLInputElement>): Promise<void> => {
-    //     e.preventDefault();
-    //     const choiceFile = e.target.files && e.target.files[0];
-    //     if (choiceFile) {
-    //         const fileName = choiceFile.name;
-    //         setSelectedFileName(fileName);
-    
-    //         // XML 파일 로드
-    //         const reader = new FileReader();
-    //         reader.onload = (event) => {
-    //             if (event.target && typeof event.target.result === 'string') {
-    //                 const urdfString: string = event.target.result;
-    //                 localStorage.setItem("urdf", urdfString);
-    //                 onURDFLoad(true);
-    //                 // 여기에서 urdfString을 이용하여 XML 데이터를 처리할 수 있습니다.
-    //                 handleXMLData(urdfString);
-    //             }
-    //         };
-    //         reader.readAsText(choiceFile);
-    //     }
-    // }
 
-    // 카메라 시점 변경을 처리하는 함수
     const handleCamera = (direction: string) => {
         onChangeCameraDirection(direction);
     };
 
-    // 링크 선택 함수
-    const selectLink = (linkName: string): void => {
-        setSelectedLink(linkName);
-        onSelectLink(linkName);
-    };
-
-    const geometryChangeButton = (geomteryType: string): void => {
-        console.log(`Selected geometry type: ${geomteryType}`);
-        onSelectedGeometry(geomteryType);
+    const handleGeometry = (geometryType: string): void => {
+        onChangeGeometry(geometryType);
     }
 
     return (
@@ -92,11 +68,11 @@ const SettingsComponent: React.FC<SettingComponentProps> = ({onURDFLoad, onChang
             </div>
             <div className="link_container">
                 <h3>Link</h3>
-                <h2>선택된 link :</h2>
+                <h2>선택된 link : {linkName}</h2>
                 <h3>Geometry</h3>
-                <button onClick={() => geometryChangeButton("BoxGeometry")}>box</button>
-                <button onClick={() => geometryChangeButton("CylinderGeometry")}>cylinder</button>
-                <button onClick={() => geometryChangeButton("SphereGeometry")}>sphere</button>
+                <button onClick={() => handleGeometry("BoxGeometry")} className={selectedGeometry === "BoxGeometry" ? "selected" : ""}>box</button>
+                <button onClick={() => handleGeometry("CylinderGeometry")} className={selectedGeometry === "CylinderGeometry" ? "selected" : ""}>cylinder</button>
+                <button onClick={() => handleGeometry("SphereGeometry")} className={selectedGeometry === "SphereGeometry" ? "selected" : ""}>sphere</button>
             </div>
             <div className="joint_container">
                 <h3>Joint <span>&#40;범위: -3 ~ 3&#41;</span></h3>

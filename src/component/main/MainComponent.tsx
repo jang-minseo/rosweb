@@ -8,10 +8,9 @@ const MainComponent = () => {
     const [urdfKey, setUrdfKey] = useState<number>(Date.now());
     const [isURDFLoaded, setIsURDFLoaded] = useState(false);
     const [cameraDirection, setCameraDirection] = useState("");
-    const [linkNames, setLinkNames] = useState<string[]>([]);
+    const [linkName, setLinkName] = useState<string>("");
     const [jointNames, setJointNames] = useState<string[]>([]);
-    const [selectedLink, setSelectedLink] = useState<string>("");
-    const [selectedGeometry, setSelectedGeometry] = useState<string>("");
+    const [selectedGeometry, setSelectedGeometry] = useState<string>("BoxGeometry"); // 기본값 설정
 
     const selectURDF = (isURDFLoaded: boolean): void => {
         setIsURDFLoaded(isURDFLoaded);
@@ -22,13 +21,8 @@ const MainComponent = () => {
         setCameraDirection(direction);
     };
 
-    const handleLinkSelect = (linkName: string): void => {
-        setSelectedLink(linkName);
-        console.log(`${linkName}이 선택됨`);
-    };
-
-    const handleGeometry = (selectedGeometry: string): void => {
-        setSelectedGeometry(selectedGeometry);
+    const handleGeometry = (geometryType: string): void => {
+        setSelectedGeometry(geometryType);
     }
 
     return (
@@ -41,10 +35,10 @@ const MainComponent = () => {
                     <SettingComponent
                         onURDFLoad={selectURDF}
                         onChangeCameraDirection={handleCamera}
-                        linkNames={linkNames}
                         jointNames={jointNames}
-                        onSelectLink={handleLinkSelect}
-                        onSelectedGeometry={handleGeometry}
+                        linkName={linkName}
+                        onChangeGeometry={handleGeometry}
+                        selectedGeometry={selectedGeometry} // 선택한 지오메트리 상태 전달
                     />
                 </div>
                 <div className="universe_component_container">
@@ -52,9 +46,8 @@ const MainComponent = () => {
                         selectedGeometry={selectedGeometry}
                         isURDFLoaded={isURDFLoaded}
                         cameraDirection={cameraDirection}
-                        selectedLink={selectedLink}
-                        setLinkNames={setLinkNames}
                         setJointNames={setJointNames}
+                        setLinkName={setLinkName}
                         urdfKey={urdfKey}
                     />
                 </div>
