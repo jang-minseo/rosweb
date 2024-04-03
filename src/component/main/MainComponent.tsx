@@ -10,7 +10,8 @@ const MainComponent = () => {
     const [cameraDirection, setCameraDirection] = useState("");
     const [linkName, setLinkName] = useState<string>("");
     const [jointNames, setJointNames] = useState<string[]>([]);
-    const [selectedGeometry, setSelectedGeometry] = useState<string>("BoxGeometry"); // 기본값 설정
+    const [jointValues, setJointValues] = useState<number[]>([]);
+    const [selectedGeometry, setSelectedGeometry] = useState<string>("");
 
     const selectURDF = (isURDFLoaded: boolean): void => {
         setIsURDFLoaded(isURDFLoaded);
@@ -25,6 +26,16 @@ const MainComponent = () => {
         setSelectedGeometry(geometryType);
     }
 
+    const handleJointValue = (index: number, value: number): void => {
+        const newJointValues = [...jointValues];
+        newJointValues[index] = value;
+        setJointValues(newJointValues);
+    };
+
+    const updateJointValue = (values: number[]): void => {
+        setJointValues(values);
+    }
+
     return (
         <div className="mainpage_container">
             <div className="top_component_container">
@@ -36,13 +47,17 @@ const MainComponent = () => {
                         onURDFLoad={selectURDF}
                         onChangeCameraDirection={handleCamera}
                         jointNames={jointNames}
+                        jointValues={jointValues}
                         linkName={linkName}
                         onChangeGeometry={handleGeometry}
-                        selectedGeometry={selectedGeometry} // 선택한 지오메트리 상태 전달
+                        selectedGeometry={selectedGeometry}
+                        onChangeJointValue={handleJointValue}
+                        updateJointValue={updateJointValue}
                     />
                 </div>
                 <div className="universe_component_container">
                     <UniverseComponent
+                        setJointValues={setJointValues}
                         selectedGeometry={selectedGeometry}
                         isURDFLoaded={isURDFLoaded}
                         cameraDirection={cameraDirection}

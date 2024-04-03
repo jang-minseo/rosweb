@@ -9,6 +9,7 @@ interface UniverseComponentProps {
     cameraDirection: string;
     selectedGeometry: string;
     setJointNames: (jointNames: string[]) => void;
+    setJointValues: (jointValues: number[]) => void;
     setLinkName: (linkName: string) => void;
     urdfKey: number;
 }
@@ -17,7 +18,8 @@ const UniverseComponent: React.FC<UniverseComponentProps> = ({
     isURDFLoaded, 
     selectedGeometry, 
     cameraDirection, 
-    setJointNames, 
+    setJointNames,
+    setJointValues,
     urdfKey, 
     setLinkName
 }) => {
@@ -26,8 +28,7 @@ const UniverseComponent: React.FC<UniverseComponentProps> = ({
     let camera: THREE.PerspectiveCamera;
     let control: OrbitControls;
     const [robot, setRobotGroup] = useState<THREE.Group>();
-    
-
+    const [selectedObject, setSelectedObject] = useState<THREE.Object3D | null>(null);
     // 3D 화면 기본 설정
     const viewScene = (container: HTMLElement): void => {
         scene = new THREE.Scene();
@@ -80,17 +81,15 @@ const UniverseComponent: React.FC<UniverseComponentProps> = ({
 
             const urdfURL: string = localStorage.getItem("urdf")!.toString();
 
-            loader.load(urdfURL, (robot: URDFRobot) => {
-                
+            loader.load(urdfURL, (robot: URDFRobot) => {                
                 
                 const RobotGroup: THREE.Group = new THREE.Group();
                 const jointNames: string[] = [];
+                const jointValues: number[] = [];
                 robot.traverse((child: any) => {
                     const childJson: any = JSON.parse(JSON.stringify(child));
-
                     if (child instanceof THREE.Mesh) {
                         const colorTag: string = childJson.materials[0].name.toLocaleLowerCase();
-
                         switch (colorTag) {
                             case "black":
                             case "light_black":
@@ -109,15 +108,16 @@ const UniverseComponent: React.FC<UniverseComponentProps> = ({
                         child.material.transparent = true;
                         child.material.opacity = 1.0;
                     }
-                     if (child.type === "URDFJoint") {
+                    if (child.type === "URDFJoint") {
                         jointNames.push(child.name);
+                        jointValues[child.name] = child.jointValue[0];
                     }
-
-                    child.castShadow = true;
-                                       
+                    child.castShadow = true;          
                 });
                 setJointNames(jointNames);
-
+                setJointValues(jointValues);
+                console.log(jointValues);
+                
                 RobotGroup.add(robot);
                 setRobotGroup(RobotGroup);
                 RobotGroup.position.set(0, 0, 0);
@@ -129,7 +129,7 @@ const UniverseComponent: React.FC<UniverseComponentProps> = ({
 
     const onCanvasClick = (event: MouseEvent) => {
         event.preventDefault();
-    
+        event.stopPropagation();
         // 마우스 위치 계산
         const rect = renderer.domElement.getBoundingClientRect();
         const mouseX = ((event.clientX - rect.left) / rect.width) * 2 - 1;
@@ -152,31 +152,14 @@ const UniverseComponent: React.FC<UniverseComponentProps> = ({
     
         if (intersects.length > 0) {
             const selectedObject = intersects[0].object;
+            setSelectedObject(selectedObject);
             console.log(selectedObject);
-
-            if (selectedObject instanceof THREE.Mesh && selectedGeometry==="BoxGeometry") {
-                const newGeometry1 = new THREE.BoxGeometry();
-                selectedObject.geometry = newGeometry1;
-                selectedObject.material.transparent = true;
-                selectedObject.material.opacity = 1.0;
-            } else if(selectedObject instanceof THREE.Mesh && selectedGeometry==="CylinderGeometry") {
-                const newGeometry2 = new THREE.CylinderGeometry(); 
-                selectedObject.geometry = newGeometry2;
-                selectedObject.material.transparent = true;
-                selectedObject.material.opacity = 1.0;
-            } else if(selectedObject instanceof THREE.Mesh && selectedGeometry==="SphereGeometry") {
-                const newGeometry3 = new THREE.SphereGeometry(); 
-                selectedObject.geometry = newGeometry3;
-                selectedObject.material.transparent = true;
-                selectedObject.material.opacity = 1.0;
-            }
     
             // 부모 오브젝트를 탐색하며 URDFLink 찾기
             let targetObject = selectedObject;
             while (targetObject !== null) {
                 if (targetObject.parent?.parent?.type) {
                     linkName = targetObject.parent.parent.name;
-                    console.log(`URDFLink name: ${linkName}`);
                     setLinkName(linkName);
                     break;
                 }
@@ -186,9 +169,7 @@ const UniverseComponent: React.FC<UniverseComponentProps> = ({
     };
     
     
-    // gemetry 변경하기
 
-    
     useEffect(() => {
         const container: HTMLElement | null = document.getElementById("universe_container");
     
@@ -208,7 +189,7 @@ const UniverseComponent: React.FC<UniverseComponentProps> = ({
 
         return (): void => {
             if (robot && scene) {
-                scene.remove(robot); // URDF 모델을 장면에서 제거
+                scene.remove(robot);
                 robot.traverse((child) => {
                     if ((child as THREE.Mesh).isMesh) {
                         let mesh = child as THREE.Mesh;
@@ -224,7 +205,36 @@ const UniverseComponent: React.FC<UniverseComponentProps> = ({
             container.removeEventListener('click', onCanvasClick, false);
             container!.removeChild(renderer.domElement);
         };
-    }, [isURDFLoaded, urdfKey, cameraDirection, selectedGeometry]);
+    }, [isURDFLoaded, urdfKey, cameraDirection]);
+
+    useEffect(() => {
+        if (selectedObject && selectedObject instanceof THREE.Mesh && selectedGeometry) {
+            let newGeometry: THREE.BufferGeometry | THREE.BufferGeometry;
+
+            switch (selectedGeometry) {
+                case "BoxGeometry":
+                    newGeometry = new THREE.BoxGeometry();
+                    break;
+                case "CylinderGeometry":
+                    newGeometry = new THREE.CylinderGeometry();
+                    break;
+                case "SphereGeometry":
+                    newGeometry = new THREE.SphereGeometry();
+                    break;
+                default:
+                    newGeometry = selectedObject.geometry.clone(); 
+                    break;
+            }
+
+            if (newGeometry) {
+                selectedObject.geometry.dispose();
+                selectedObject.geometry = newGeometry;
+                selectedObject.material.transparent = true;
+                selectedObject.material.opacity = 1.0;
+            }
+        }
+    }, [selectedObject, selectedGeometry]);
+    
 
     return <div id="universe_container" className="universe_container"></div>;
 };

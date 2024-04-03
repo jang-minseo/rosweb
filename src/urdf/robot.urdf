@@ -1,36 +1,23 @@
 <?xml version="1.0"?>
 <robot name="rosweb">
     <link name="base_footprint">
-        <inertial>
-            <origin xyz="0 0 0" rpy="0 0 0"/>
-            <mass value="0"/>
-            <inertia ixx="0" ixy="0" ixz="0" iyy="0" iyz="0" izz="0"/>
-        </inertial>
-        <visual>
-            <origin xyz="0 0 0" rpy="0 0 0"/>
-            <geometry>
-                <box size="0 0 0"/>
-            </geometry>
-            <material name="red">
-                <color rgba="1 0 0 1"/>
-                <texture filename=""/>
-            </material>
-        </visual>
-        <collision>
-            <origin xyz="0 0 0" rpy="0 0 0"/>
-            <geometry>
-                <box size="0 0 0"/>
-            </geometry>
-        </collision>
-    </link>
+		<visual>
+			<geometry>
+				<box size="0.001 0.001 0.0011"/>
+			</geometry>
+			<origin rpy="0 0 0" xyz="0 0.223 0"/>
+			<material name="blue">
+				<color rgba="1 0 1 1"/>
+			</material>
+		</visual>
+		<inertial>
+			<mass value="0.001"/>
+			<inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
+		</inertial>
+	</link>
     <link name="base_link">
-        <inertial>
-            <origin xyz="0 0 0" rpy="0 0 0"/>
-            <mass value="0"/>
-            <inertia ixx="0" ixy="0" ixz="0" iyy="0" iyz="0" izz="0"/>
-        </inertial>
         <visual name="car_base">
-            <origin xyz="0 0 0.64" rpy="0 0 0"/>
+            <origin xyz="0.45 0 0.64" rpy="0 0 0"/>
             <geometry>
                 <box size="3.536 1.322 1.703"/>
             </geometry>
@@ -46,26 +33,83 @@
         </collision>
     </link>
     <link name="fr_wheel">
-        <inertial>
-            <origin xyz="0 0 0" rpy="0 0 0"/>
-            <mass value="0"/>
-            <inertia ixx="0" ixy="0" ixz="0" iyy="0" iyz="0" izz="0"/>
-        </inertial>
-        <visual name="">
-            <origin xyz="0 0 0" rpy="0 0 0"/>
-            <geometry>
-                <cylinder radius="" length="0.0"/>
-            </geometry>
-            <material name="">
-                <color rgba="1 0 0 1"/>
-                <texture filename=""/>
-            </material>
-        </visual>
-        <collision>
-            <origin xyz="0 0 0" rpy="0 0 0"/>
-            <geometry>
-                <box size="0 0 0"/>
-            </geometry>
-        </collision>
-    </link>
+		<visual>
+			<geometry>
+				<cylinder length="0.105" radius="0.276"/>
+			</geometry>
+			<origin rpy="0 1.57 0" xyz="0 0 0"/>
+			<material name="red">
+				<color rgba="1 0 0 1"/>
+			</material>
+		</visual>
+		<collision>
+			<geometry>
+				<cylinder length="0.105" radius="0.276"/>
+			</geometry>
+		</collision>
+		<inertial>
+			<mass value="10"/>
+			<inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
+		</inertial>
+	</link>
+    <link name="fl_wheel">
+		<visual>
+			<geometry>
+				<cylinder length="0.105" radius="0.276"/>
+			</geometry>
+			<origin rpy="0 1.57 0" xyz="0 0 0"/>
+			<material name="red">
+				<color rgba="1 0 0 1"/>
+			</material>
+		</visual>
+		<collision>
+			<geometry>
+				<cylinder length="0.105" radius="0.276"/>
+			</geometry>
+		</collision>
+		<inertial>
+			<mass value="10"/>
+			<inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
+		</inertial>
+	</link>
+    <link name="br_wheel">
+		<visual>
+			<geometry>
+				<cylinder length="0.105" radius="0.276"/>
+			</geometry>
+			<origin rpy="0 1.57 0" xyz="0 0 0"/>
+			<material name="red">
+				<color rgba="1 0 0 1"/>
+			</material>
+		</visual>
+		<collision>
+			<geometry>
+				<cylinder length="0.105" radius="0.276"/>
+			</geometry>
+		</collision>
+		<inertial>
+			<mass value="10"/>
+			<inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
+		</inertial>
+	</link>
+    <link name="bl_wheel">
+		<visual>
+			<geometry>
+				<cylinder length="0.175" radius="0.276"/>
+			</geometry>
+			<origin rpy="0 1.57 0" xyz="0 0 0"/>
+			<material name="red">
+				<color rgba="1 0 0 1"/>
+			</material>
+		</visual>
+		<collision>
+			<geometry>
+				<cylinder length="0.105" radius="0.276"/>
+			</geometry>
+		</collision>
+		<inertial>
+			<mass value="10"/>
+			<inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
+		</inertial>
+	</link>
 </robot>

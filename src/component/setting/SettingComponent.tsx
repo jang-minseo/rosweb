@@ -7,16 +7,22 @@ interface SettingComponentProps {
     onChangeGeometry: (geometryType: string) => void;
     linkName : string;
     jointNames: string[];
-    selectedGeometry: string; // 새로운 props 추가: 선택한 지오메트리 상태
+    jointValues: number[];
+    selectedGeometry: string;
+    onChangeJointValue: (index: number, value: number) => void;
+    updateJointValue: (value: number[]) => void;
 }
 
 const SettingsComponent: React.FC<SettingComponentProps> = ({
-    onURDFLoad, 
-    onChangeCameraDirection, 
-    onChangeGeometry, 
-    jointNames, 
+    onURDFLoad,
+    onChangeCameraDirection,
+    onChangeGeometry,
+    onChangeJointValue,
+    updateJointValue,
+    jointNames,
+    jointValues,
     linkName,
-    selectedGeometry // 새로운 props로부터 선택한 지오메트리 상태 가져오기
+    selectedGeometry
 }) => {
     const [selectedFileName, setSelectedFileName] = useState<string>('');
 
@@ -40,6 +46,12 @@ const SettingsComponent: React.FC<SettingComponentProps> = ({
     const handleGeometry = (geometryType: string): void => {
         onChangeGeometry(geometryType);
     }
+
+    const handleJointValue = (index: number, value: number): void => {
+        onChangeJointValue(index, value);
+        updateJointValue([...jointValues]);
+        console.log("Updated jointValues:", [...jointValues]);
+    };
 
     return (
         <div className="setting_container">
@@ -82,10 +94,19 @@ const SettingsComponent: React.FC<SettingComponentProps> = ({
                         <input
                             type="number"
                             id={`number_${index}`}
-                            defaultValue={0}
+                            defaultValue={jointValues[index] || 0}
                             min={-3}
                             max={3}
                             step={0.01}
+                            onChange={(e) => handleJointValue(index, parseFloat(e.target.value))}
+                            onInput={(e: React.FormEvent<HTMLInputElement>) => {
+                                const value = parseFloat(e.currentTarget.value);
+                                if (value < -3) {
+                                    e.currentTarget.value = '-3';
+                                } else if (value > 3) {
+                                    e.currentTarget.value = '3';
+                                }
+                            }}
                         />
                     </div>
                 ))}
