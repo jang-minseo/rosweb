@@ -12,6 +12,7 @@ interface UniverseComponentProps {
     setJointValues: (jointValues: number[]) => void;
     setLinkName: (linkName: string) => void;
     urdfKey: number;
+    jointValues: number[];
 }
 
 const UniverseComponent: React.FC<UniverseComponentProps> = ({
@@ -21,14 +22,17 @@ const UniverseComponent: React.FC<UniverseComponentProps> = ({
     setJointNames,
     setJointValues,
     urdfKey, 
-    setLinkName
+    setLinkName,
+    jointValues
 }) => {
     let renderer: THREE.WebGLRenderer;
     let scene: THREE.Scene;
     let camera: THREE.PerspectiveCamera;
     let control: OrbitControls;
-    const [robot, setRobotGroup] = useState<THREE.Group>();
+    const [robot, setRobotGroup] = useState<THREE.Group | null>(null);
+    
     const [selectedObject, setSelectedObject] = useState<THREE.Object3D | null>(null);
+    
     // 3D 화면 기본 설정
     const viewScene = (container: HTMLElement): void => {
         scene = new THREE.Scene();
@@ -70,62 +74,63 @@ const UniverseComponent: React.FC<UniverseComponentProps> = ({
     };
 
     // URDF Load 기능
-    const loadURDF = (): void => {
-        if (isURDFLoaded) {
-            const manager = new THREE.LoadingManager();
-            const loader = new URDFLoader(manager);
+    // URDF Load 기능
+const loadURDF = (): void => {
+    if (isURDFLoaded) {
+        const manager = new THREE.LoadingManager();
+        const loader = new URDFLoader(manager);
 
-            loader.packages = {
-                packageName: "/",
-            };
+        loader.packages = {
+            packageName: "/",
+        };
 
-            const urdfURL: string = localStorage.getItem("urdf")!.toString();
+        const urdfURL: string = localStorage.getItem("urdf")!.toString();
 
-            loader.load(urdfURL, (robot: URDFRobot) => {                
-                
-                const RobotGroup: THREE.Group = new THREE.Group();
-                const jointNames: string[] = [];
-                const jointValues: number[] = [];
-                robot.traverse((child: any) => {
-                    const childJson: any = JSON.parse(JSON.stringify(child));
-                    if (child instanceof THREE.Mesh) {
-                        const colorTag: string = childJson.materials[0].name.toLocaleLowerCase();
-                        switch (colorTag) {
-                            case "black":
-                            case "light_black":
-                                child.material = new THREE.MeshBasicMaterial({ color: 0x00000 });
-                                break;
-                            case "blue":
-                                child.material = new THREE.MeshBasicMaterial({ color: 0x0000ff });
-                                break;
-                            case "red":
-                                child.material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
-                                break;
-                            default:
-                                child.material = new THREE.MeshBasicMaterial({ color: 0x00000 });
-                                break;
-                        }
-                        child.material.transparent = true;
-                        child.material.opacity = 1.0;
+        loader.load(urdfURL, (robot: URDFRobot) => {                
+            const RobotGroup: THREE.Group = new THREE.Group();
+            const jointNames: string[] = [];
+            const jointValues: number[] = [];
+            robot.traverse((child: any) => {
+                const childJson: any = JSON.parse(JSON.stringify(child));
+                if (child instanceof THREE.Mesh) {
+                    // 기존 코드
+                    const colorTag: string = childJson.materials[0].name.toLocaleLowerCase();
+                    switch (colorTag) {
+                        case "black":
+                        case "light_black":
+                            child.material = new THREE.MeshBasicMaterial({ color: 0x00000 });
+                            break;
+                        case "blue":
+                            child.material = new THREE.MeshBasicMaterial({ color: 0x0000ff });
+                            break;
+                        case "red":
+                            child.material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+                            break;
+                        default:
+                            child.material = new THREE.MeshBasicMaterial({ color: 0x00000 });
+                            break;
                     }
-                    if (child.type === "URDFJoint") {
-                        jointNames.push(child.name);
-                        jointValues[child.name] = child.jointValue[0];
-                    }
-                    child.castShadow = true;          
-                });
-                setJointNames(jointNames);
-                setJointValues(jointValues);
-                console.log(jointValues);
-                
-                RobotGroup.add(robot);
-                setRobotGroup(RobotGroup);
-                RobotGroup.position.set(0, 0, 0);
-                RobotGroup.rotateX(-(Math.PI / 2));
-                scene.add(RobotGroup);
+                    child.material.transparent = true;
+                    child.material.opacity = 1.0;
+                }
+                if (child.type === "URDFJoint") {
+                    jointNames.push(child.name);
+                    jointValues[child.name] = child.jointValue[0];
+                }
+                child.castShadow = true;          
             });
-        } 
-    };
+            setJointNames(jointNames);
+            setJointValues(jointValues);
+            console.log(jointValues);
+            
+            RobotGroup.add(robot);
+            setRobotGroup(RobotGroup);
+            RobotGroup.position.set(0, 0, 0);
+            RobotGroup.rotateX(-(Math.PI / 2));
+            scene.add(RobotGroup);
+        });
+    } 
+};
 
     const onCanvasClick = (event: MouseEvent) => {
         event.preventDefault();
@@ -168,7 +173,17 @@ const UniverseComponent: React.FC<UniverseComponentProps> = ({
         }
     };
     
-    
+    const updateRobotJointValues = (jointValues: number[]) => {
+        robot!.traverse((child: any) => {
+            if (child.type === "URDFJoint") {
+                const jointValue = jointValues[child.name];
+                if (jointValue !== undefined) {
+                    console.log("Updated JSON data:", child.toJSON());
+                    child.setJointValue(jointValue);
+                }
+            }
+        });
+    };
 
     useEffect(() => {
         const container: HTMLElement | null = document.getElementById("universe_container");
@@ -235,6 +250,12 @@ const UniverseComponent: React.FC<UniverseComponentProps> = ({
         }
     }, [selectedObject, selectedGeometry]);
     
+    useEffect(() => {
+        // 로봇 모델이 로드된 후에만 jointValues 업데이트
+        if (robot && isURDFLoaded) {
+            updateRobotJointValues(jointValues);
+        }
+    }, [jointValues, robot, isURDFLoaded]);
 
     return <div id="universe_container" className="universe_container"></div>;
 };

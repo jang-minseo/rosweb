@@ -36,6 +36,10 @@ const MainComponent = () => {
         setJointValues(values);
     }
 
+    const saveURDF = (urdfString: string): void => {
+        console.log("Save URDF:", urdfString);
+    };
+
     return (
         <div className="mainpage_container">
             <div className="top_component_container">
@@ -44,6 +48,7 @@ const MainComponent = () => {
             <div className="main_container">
                 <div className="setting_component_container">
                     <SettingComponent
+                        saveURDF={saveURDF}
                         onURDFLoad={selectURDF}
                         onChangeCameraDirection={handleCamera}
                         jointNames={jointNames}
@@ -57,6 +62,7 @@ const MainComponent = () => {
                 </div>
                 <div className="universe_component_container">
                     <UniverseComponent
+                        jointValues={jointValues}
                         setJointValues={setJointValues}
                         selectedGeometry={selectedGeometry}
                         isURDFLoaded={isURDFLoaded}

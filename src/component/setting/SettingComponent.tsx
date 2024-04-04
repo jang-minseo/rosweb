@@ -11,6 +11,7 @@ interface SettingComponentProps {
     selectedGeometry: string;
     onChangeJointValue: (index: number, value: number) => void;
     updateJointValue: (value: number[]) => void;
+    saveURDF: (urefString: string) => void;
 }
 
 const SettingsComponent: React.FC<SettingComponentProps> = ({
@@ -19,6 +20,7 @@ const SettingsComponent: React.FC<SettingComponentProps> = ({
     onChangeGeometry,
     onChangeJointValue,
     updateJointValue,
+    saveURDF,
     jointNames,
     jointValues,
     linkName,
@@ -48,9 +50,18 @@ const SettingsComponent: React.FC<SettingComponentProps> = ({
     }
 
     const handleJointValue = (index: number, value: number): void => {
-        onChangeJointValue(index, value);
-        updateJointValue([...jointValues]);
+        const updatedJointValues = [...jointValues];
+        updatedJointValues[index] = value;
+        onChangeJointValue(index, value); 
+        updateJointValue(updatedJointValues);
         console.log("Updated jointValues:", [...jointValues]);
+    };
+
+    const handleSaveURDF = (): void => {
+        const urdfString = localStorage.getItem("urdf");
+        if (urdfString) {
+            saveURDF(urdfString);
+        }
     };
 
     return (
@@ -81,10 +92,12 @@ const SettingsComponent: React.FC<SettingComponentProps> = ({
             <div className="link_container">
                 <h3>Link</h3>
                 <h2>선택된 link : {linkName}</h2>
-                <h3>Geometry</h3>
+            <div className="geometry_container">
+            <h3>Geometry</h3>
                 <button onClick={() => handleGeometry("BoxGeometry")} className={selectedGeometry === "BoxGeometry" ? "selected" : ""}>box</button>
                 <button onClick={() => handleGeometry("CylinderGeometry")} className={selectedGeometry === "CylinderGeometry" ? "selected" : ""}>cylinder</button>
                 <button onClick={() => handleGeometry("SphereGeometry")} className={selectedGeometry === "SphereGeometry" ? "selected" : ""}>sphere</button>
+            </div>
             </div>
             <div className="joint_container">
                 <h3>Joint <span>&#40;범위: -3 ~ 3&#41;</span></h3>
@@ -94,7 +107,7 @@ const SettingsComponent: React.FC<SettingComponentProps> = ({
                         <input
                             type="number"
                             id={`number_${index}`}
-                            defaultValue={jointValues[index] || 0}
+                            value={jointValues[index] || 0}
                             min={-3}
                             max={3}
                             step={0.01}
@@ -113,7 +126,7 @@ const SettingsComponent: React.FC<SettingComponentProps> = ({
             </div>
             <div className="export_container">
                 <h3>Export</h3>
-                <button>내보내기</button>
+                <button onClick={handleSaveURDF}>저장하기</button>
             </div>
         </div>
     );
